@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using ContactManager;
 
 namespace ContactManager
 {
-    public class ContactManager
+    public class ContactManager1
     {
         public List<Contact> Contacts { get; private set; }
 
-        public ContactManager()
+        public ContactManager1()
         {
             Contacts = new List<Contact>();
             LoadContacts();

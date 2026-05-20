@@ -8,7 +8,7 @@ namespace ContactManager
 {
     public class ContactForm : Form
     {
-        private ContactManager contactManager;
+        private ContactManager1 contactManager;
         private TextBox nameTextBox;
         private TextBox phoneNumberTextBox;
         private Button addContactButton;
@@ -83,7 +83,7 @@ namespace ContactManager
             this.Controls.Add(searchButton);
             this.Controls.Add(contactsListBox);
 
-            contactManager = new ContactManager();
+            contactManager = new ContactManager1();
             UpdateContactsList();
         }
 
