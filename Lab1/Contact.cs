@@ -19,4 +19,4 @@ namespace ContactManager
             PhoneNumber = phoneNumber;
         }
     }
-}   
+}

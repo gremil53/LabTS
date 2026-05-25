@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using ContactManager;
 
 namespace ContactManager
 {
     public class ContactManager1
     {
+        private readonly string _filePath = "contacts.txt";
+
         public List<Contact> Contacts { get; private set; }
 
         public ContactManager1()
@@ -27,9 +28,6 @@ namespace ContactManager
             if (string.IsNullOrWhiteSpace(contact.PhoneNumber))
                 throw new ArgumentException("Телефон не может быть пустым!");
 
-            if (contact.Name.Length < 2)
-                throw new ArgumentException("Имя должно содержать минимум 2 символа!");
-
             Contacts.Add(contact);
             SaveContacts();
         }
@@ -39,32 +37,59 @@ namespace ContactManager
             if (contact == null)
                 throw new ArgumentNullException(nameof(contact));
 
-            Contacts.Remove(contact);
-            SaveContacts();
+            var contactToRemove = Contacts.FirstOrDefault(c =>
+                c.Name == contact.Name && c.PhoneNumber == contact.PhoneNumber);
+
+            if (contactToRemove != null)
+            {
+                Contacts.Remove(contactToRemove);
+                SaveContacts();
+            }
         }
 
         public List<Contact> SearchContacts(string query)
         {
             if (string.IsNullOrWhiteSpace(query))
-                return Contacts;
+                return Contacts.ToList();
 
-            // ИСПРАВЛЕНО: убрал StringComparison.OrdinalIgnoreCase
             return Contacts.Where(c =>
                 c.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 ||
                 c.PhoneNumber.Contains(query)).ToList();
         }
 
+        public void SaveToFile(string filePath)
+        {
+            var lines = Contacts.Select(c => $"{c.Name}|{c.PhoneNumber}");
+            File.WriteAllLines(filePath, lines);
+        }
+
+        public void LoadFromFile(string filePath)
+        {
+            if (!File.Exists(filePath)) return;
+
+            Contacts.Clear();
+            var lines = File.ReadAllLines(filePath);
+            foreach (var line in lines)
+            {
+                var parts = line.Split('|');
+                if (parts.Length == 2)
+                {
+                    Contacts.Add(new Contact(parts[0], parts[1]));
+                }
+            }
+        }
+
         private void SaveContacts()
         {
             var lines = Contacts.Select(c => $"{c.Name}|{c.PhoneNumber}");
-            File.WriteAllLines("contacts.txt", lines);
+            File.WriteAllLines(_filePath, lines);
         }
 
         private void LoadContacts()
         {
-            if (!File.Exists("contacts.txt")) return;
+            if (!File.Exists(_filePath)) return;
 
-            var lines = File.ReadAllLines("contacts.txt");
+            var lines = File.ReadAllLines(_filePath);
             foreach (var line in lines)
             {
                 var parts = line.Split('|');

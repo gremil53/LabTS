@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Windows.Forms;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 namespace ContactManager
 {
     public class ContactForm : Form
     {
-        private ContactManager1 contactManager;
+        private ContactManager1 _contactManager;
         private TextBox nameTextBox;
         private TextBox phoneNumberTextBox;
         private Button addContactButton;
@@ -19,6 +17,13 @@ namespace ContactManager
 
         public ContactForm()
         {
+            InitializeForm();
+            _contactManager = new ContactManager1();
+            UpdateContactsList();
+        }
+
+        private void InitializeForm()
+        {
             this.Text = "Управление контактами";
             this.Width = 500;
             this.Height = 400;
@@ -26,15 +31,13 @@ namespace ContactManager
             nameTextBox = new TextBox
             {
                 Location = new System.Drawing.Point(10, 10),
-                Width = 150,
-               
+                Width = 150
             };
 
             phoneNumberTextBox = new TextBox
             {
                 Location = new System.Drawing.Point(170, 10),
-                Width = 150,
-                
+                Width = 150
             };
 
             addContactButton = new Button
@@ -56,8 +59,7 @@ namespace ContactManager
             searchTextBox = new TextBox
             {
                 Location = new System.Drawing.Point(10, 70),
-                Width = 200,
-                
+                Width = 200
             };
 
             searchButton = new Button
@@ -82,15 +84,12 @@ namespace ContactManager
             this.Controls.Add(searchTextBox);
             this.Controls.Add(searchButton);
             this.Controls.Add(contactsListBox);
-
-            contactManager = new ContactManager1();
-            UpdateContactsList();
         }
 
         private void UpdateContactsList()
         {
             contactsListBox.Items.Clear();
-            foreach (var contact in contactManager.Contacts)
+            foreach (var contact in _contactManager.Contacts)
             {
                 contactsListBox.Items.Add($"{contact.Name} - {contact.PhoneNumber}");
             }
@@ -106,18 +105,21 @@ namespace ContactManager
         {
             try
             {
-                if (string.IsNullOrEmpty(nameTextBox.Text) ||
-                    string.IsNullOrEmpty(phoneNumberTextBox.Text))
+                if (string.IsNullOrWhiteSpace(nameTextBox.Text) ||
+                    string.IsNullOrWhiteSpace(phoneNumberTextBox.Text))
                 {
                     MessageBox.Show("Заполните все поля!", "Ошибка",
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                Contact newContact = new Contact(nameTextBox.Text, phoneNumberTextBox.Text);
-                contactManager.AddContact(newContact);
+                var newContact = new Contact(nameTextBox.Text.Trim(), phoneNumberTextBox.Text.Trim());
+                _contactManager.AddContact(newContact);
                 UpdateContactsList();
                 ClearInputs();
+
+                MessageBox.Show("Контакт добавлен!", "Успех",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -138,20 +140,22 @@ namespace ContactManager
                 }
 
                 string selectedItem = contactsListBox.SelectedItem.ToString();
-                string[] parts = selectedItem.Split(new[] { '-' }, StringSplitOptions.None);
+                string[] parts = selectedItem.Split(new[] { " - " }, StringSplitOptions.None);
 
                 if (parts.Length >= 2)
                 {
                     string name = parts[0].Trim();
                     string phoneNumber = parts[1].Trim();
 
-                    var contactToRemove = contactManager.Contacts.Find(c =>
+                    var contactToRemove = _contactManager.Contacts.FirstOrDefault(c =>
                         c.Name == name && c.PhoneNumber == phoneNumber);
 
                     if (contactToRemove != null)
                     {
-                        contactManager.RemoveContact(contactToRemove);
+                        _contactManager.RemoveContact(contactToRemove);
                         UpdateContactsList();
+                        MessageBox.Show("Контакт удален!", "Успех",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             }
@@ -166,13 +170,15 @@ namespace ContactManager
         {
             try
             {
-                if (string.IsNullOrEmpty(searchTextBox.Text))
+                string query = searchTextBox.Text;
+
+                if (string.IsNullOrWhiteSpace(query))
                 {
                     UpdateContactsList();
                     return;
                 }
 
-                var searchResults = contactManager.SearchContacts(searchTextBox.Text);
+                var searchResults = _contactManager.SearchContacts(query);
                 contactsListBox.Items.Clear();
 
                 foreach (var contact in searchResults)
