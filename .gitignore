@@ -416,3 +416,48 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+# Visual Studio временные файлы
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+*.usertasks
+
+# Папки с настройками
+.vs/
+.idea/
+.vscode/
+
+# Файлы пакетов NuGet
+packages/
+*.nupkg
+packages.config
+
+# Папки Properties (автоматические настройки проекта)
+**/Properties/
+
+# Временные файлы
+*.tmp
+*.temp
+*.cache
+*.log
+
+# Файлы пользовательских настроек
+*.user
+*.suo
+
+# Папки с отладкой
+Debug/
+Release/
+x86/
+x64/
+
+# Файлы с тестовыми данными
+*.txt
+!*.txt   # разрешить только если нужно отслеживать специфические .txt файлы
+
+# Файлы, создаваемые при сборке
+*.dll
+*.exe
+*.pdb
