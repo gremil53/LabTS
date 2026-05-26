@@ -48,7 +48,6 @@ namespace ContactManager
             if (string.IsNullOrWhiteSpace(query))
                 return Contacts;
 
-            // ИСПРАВЛЕНО: убрал StringComparison.OrdinalIgnoreCase
             return Contacts.Where(c =>
                 c.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 ||
                 c.PhoneNumber.Contains(query)).ToList();
