@@ -7,15 +7,80 @@ namespace ContactManager
 {
     public class ContactManager1
     {
-        private readonly string _filePath = "contacts.txt";
+        private readonly string _contactsFilePath = "contacts.txt";
+        private readonly string _groupsFilePath = "groups.txt";
 
         public List<Contact> Contacts { get; private set; }
+        public List<ContactGroup> Groups { get; private set; }
 
         public ContactManager1()
         {
             Contacts = new List<Contact>();
+            Groups = new List<ContactGroup>();
+            LoadGroups();
             LoadContacts();
+
+            // Если нет групп, создаём группу "Без группы" (Id = 0)
+            if (!Groups.Any(g => g.Id == 0))
+            {
+                Groups.Add(new ContactGroup(0, "Без группы"));
+                SaveGroups();
+            }
         }
+
+        // ========== НОВЫЕ МЕТОДЫ ДЛЯ ГРУПП ==========
+
+        public void AddGroup(string groupName)
+        {
+            if (string.IsNullOrWhiteSpace(groupName))
+                throw new ArgumentException("Название группы не может быть пустым!");
+
+            int newId = Groups.Count > 0 ? Groups.Max(g => g.Id) + 1 : 1;
+            Groups.Add(new ContactGroup(newId, groupName));
+            SaveGroups();
+        }
+
+        public void RemoveGroup(int groupId)
+        {
+            if (groupId == 0) return; // Нельзя удалить группу "Без группы"
+
+            var group = Groups.FirstOrDefault(g => g.Id == groupId);
+            if (group != null)
+            {
+                Groups.Remove(group);
+                // Контакты из удалённой группы → в группу "Без группы"
+                foreach (var contact in Contacts.Where(c => c.GroupId == groupId))
+                {
+                    contact.GroupId = 0;
+                }
+                SaveGroups();
+                SaveContacts();
+            }
+        }
+
+        public List<ContactGroup> GetAllGroups()
+        {
+            return Groups.ToList();
+        }
+
+        public void AssignContactToGroup(Contact contact, int groupId)
+        {
+            if (contact == null)
+                throw new ArgumentNullException(nameof(contact));
+
+            if (!Groups.Any(g => g.Id == groupId))
+                throw new ArgumentException("Группа не существует!");
+
+            contact.GroupId = groupId;
+            SaveContacts();
+        }
+
+        public List<Contact> GetContactsByGroup(int groupId)
+        {
+            return Contacts.Where(c => c.GroupId == groupId).ToList();
+        }
+
+        // ========== СУЩЕСТВУЮЩИЕ МЕТОДЫ (С ИЗМЕНЕНИЯМИ) ==========
 
         public void AddContact(Contact contact)
         {
@@ -27,6 +92,10 @@ namespace ContactManager
 
             if (string.IsNullOrWhiteSpace(contact.PhoneNumber))
                 throw new ArgumentException("Телефон не может быть пустым!");
+
+            // Если группы с таким Id нет → ставим 0
+            if (!Groups.Any(g => g.Id == contact.GroupId))
+                contact.GroupId = 0;
 
             Contacts.Add(contact);
             SaveContacts();
@@ -57,45 +126,47 @@ namespace ContactManager
                 c.PhoneNumber.Contains(query)).ToList();
         }
 
-        public void SaveToFile(string filePath)
-        {
-            var lines = Contacts.Select(c => $"{c.Name}|{c.PhoneNumber}");
-            File.WriteAllLines(filePath, lines);
-        }
-
-        public void LoadFromFile(string filePath)
-        {
-            if (!File.Exists(filePath)) return;
-
-            Contacts.Clear();
-            var lines = File.ReadAllLines(filePath);
-            foreach (var line in lines)
-            {
-                var parts = line.Split('|');
-                if (parts.Length == 2)
-                {
-                    Contacts.Add(new Contact(parts[0], parts[1]));
-                }
-            }
-        }
+        // ========== СОХРАНЕНИЕ И ЗАГРУЗКА ==========
 
         private void SaveContacts()
         {
-            var lines = Contacts.Select(c => $"{c.Name}|{c.PhoneNumber}");
-            File.WriteAllLines(_filePath, lines);
+            var lines = Contacts.Select(c => $"{c.Name}|{c.PhoneNumber}|{c.GroupId}");
+            File.WriteAllLines(_contactsFilePath, lines);
         }
 
         private void LoadContacts()
         {
-            if (!File.Exists(_filePath)) return;
+            if (!File.Exists(_contactsFilePath)) return;
 
-            var lines = File.ReadAllLines(_filePath);
+            var lines = File.ReadAllLines(_contactsFilePath);
+            foreach (var line in lines)
+            {
+                var parts = line.Split('|');
+                if (parts.Length >= 2)
+                {
+                    int groupId = parts.Length >= 3 ? int.Parse(parts[2]) : 0;
+                    Contacts.Add(new Contact(parts[0], parts[1], groupId));
+                }
+            }
+        }
+
+        private void SaveGroups()
+        {
+            var lines = Groups.Select(g => $"{g.Id}|{g.Name}");
+            File.WriteAllLines(_groupsFilePath, lines);
+        }
+
+        private void LoadGroups()
+        {
+            if (!File.Exists(_groupsFilePath)) return;
+
+            var lines = File.ReadAllLines(_groupsFilePath);
             foreach (var line in lines)
             {
                 var parts = line.Split('|');
                 if (parts.Length == 2)
                 {
-                    Contacts.Add(new Contact(parts[0], parts[1]));
+                    Groups.Add(new ContactGroup(int.Parse(parts[0]), parts[1]));
                 }
             }
         }

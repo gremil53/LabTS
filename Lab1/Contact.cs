@@ -6,8 +6,9 @@ namespace ContactManager
     {
         public string Name { get; set; }
         public string PhoneNumber { get; set; }
+        public int GroupId { get; set; } 
 
-        public Contact(string name, string phoneNumber)
+        public Contact(string name, string phoneNumber, int groupId = 0)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Имя не может быть пустым!");
@@ -17,6 +18,7 @@ namespace ContactManager
 
             Name = name;
             PhoneNumber = phoneNumber;
+            GroupId = groupId; 
         }
     }
-}
+}   
