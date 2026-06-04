@@ -50,6 +50,7 @@
     <Compile Include="ContactForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="ContactGroup.cs" />
     <Compile Include="ContactManager1.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
