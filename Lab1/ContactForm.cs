@@ -1,8 +1,7 @@
-﻿using ContactManager;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
 using System.Windows.Forms;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace ContactManager
 {
@@ -17,7 +16,7 @@ namespace ContactManager
         private Button searchButton;
         private ListBox contactsListBox;
 
-        // ===== НОВЫЕ ЭЛЕМЕНТЫ ДЛЯ ГРУПП =====
+        // ===== ЭЛЕМЕНТЫ ДЛЯ ГРУПП =====
         private ComboBox groupComboBox;        // Выбор группы для нового контакта
         private ComboBox filterGroupComboBox;  // Фильтр по группам
         private Button addGroupButton;         // Кнопка "+" для создания группы
@@ -34,7 +33,7 @@ namespace ContactManager
         private void InitializeForm()
         {
             this.Text = "Управление контактами";
-            this.Width = 600;
+            this.Width = 650;
             this.Height = 500;
             this.StartPosition = FormStartPosition.CenterScreen;
 
@@ -116,7 +115,7 @@ namespace ContactManager
             };
             deleteGroupButton.Click += DeleteGroupButton_Click;
 
-            // ===== Фильтр по группам =====
+            // ===== ФИЛЬТР ПО ГРУППАМ =====
             Label filterLabel = new Label
             {
                 Text = "Фильтр:",
@@ -132,7 +131,7 @@ namespace ContactManager
             };
             filterGroupComboBox.SelectedIndexChanged += FilterGroupComboBox_SelectedIndexChanged;
 
-            // ===== Поле "Поиск" =====
+            // ===== Поиск =====
             Label searchLabel = new Label
             {
                 Text = "Поиск:",
@@ -158,8 +157,8 @@ namespace ContactManager
             contactsListBox = new ListBox
             {
                 Location = new System.Drawing.Point(10, 175),
-                Width = 560,
-                Height = 260
+                Width = 610,
+                Height = 270
             };
 
             // Добавляем всё на форму
@@ -181,18 +180,16 @@ namespace ContactManager
             this.Controls.Add(contactsListBox);
         }
 
-        // ===== ЗАГРУЗКА ГРУПП В ВЫПАДАЮЩИЕ СПИСКИ =====
+        // ===== ЗАГРУЗКА ГРУПП =====
         private void LoadGroups()
         {
             var groups = _contactManager.GetAllGroups();
 
-            // Группы для выбора при добавлении
             groupComboBox.DataSource = null;
             groupComboBox.DataSource = groups;
             groupComboBox.DisplayMember = "Name";
             groupComboBox.ValueMember = "Id";
 
-            // Группы для фильтра (с пунктом "Все группы")
             var allGroups = new List<ContactGroup>(groups);
             allGroups.Insert(0, new ContactGroup(-1, "Все группы"));
 
@@ -243,18 +240,26 @@ namespace ContactManager
             if (inputForm.ShowDialog() == DialogResult.OK)
             {
                 string groupName = txtGroupName.Text;
-                if (!string.IsNullOrWhiteSpace(groupName))
+
+                // ПРОВЕРКА НА ПУСТОЕ ИМЯ
+                if (string.IsNullOrWhiteSpace(groupName))
                 {
-                    try
-                    {
-                        _contactManager.AddGroup(groupName);
-                        LoadGroups();
-                        MessageBox.Show("Группа добавлена!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    MessageBox.Show("Название группы не может быть пустым!", "Ошибка",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                try
+                {
+                    _contactManager.AddGroup(groupName);
+                    LoadGroups();
+                    MessageBox.Show("Группа добавлена!", "Успех",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Ошибка",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -264,21 +269,24 @@ namespace ContactManager
         {
             if (groupComboBox.SelectedItem is ContactGroup selectedGroup && selectedGroup.Id != 0)
             {
-                if (MessageBox.Show($"Удалить группу \"{selectedGroup.Name}\"?", "Подтверждение", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                if (MessageBox.Show($"Удалить группу \"{selectedGroup.Name}\"?", "Подтверждение",
+                    MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
                     _contactManager.RemoveGroup(selectedGroup.Id);
                     LoadGroups();
                     UpdateContactsList();
-                    MessageBox.Show("Группа удалена!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Группа удалена!", "Успех",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             else
             {
-                MessageBox.Show("Нельзя удалить группу 'Без группы'!", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Нельзя удалить группу 'Без группы'!", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
-        // ===== ФИЛЬТРАЦИЯ ПО ГРУППЕ =====
+        // ===== ФИЛЬТРАЦИЯ =====
         private void FilterGroupComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             UpdateContactsList();
@@ -289,7 +297,6 @@ namespace ContactManager
         {
             contactsListBox.Items.Clear();
 
-            // БЕЗОПАСНОЕ ПОЛУЧЕНИЕ ID ГРУППЫ
             int filterGroupId = -1;
             if (filterGroupComboBox.SelectedValue != null)
             {
@@ -307,6 +314,7 @@ namespace ContactManager
                 contactsListBox.Items.Add($"{contact.Name} - {contact.PhoneNumber} [{groupName}]");
             }
         }
+
         private void ClearInputs()
         {
             nameTextBox.Clear();
@@ -321,9 +329,16 @@ namespace ContactManager
                 string name = nameTextBox.Text;
                 string phone = phoneNumberTextBox.Text;
 
-                if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(phone))
+                if (string.IsNullOrWhiteSpace(name))
                 {
-                    MessageBox.Show("Заполните все поля!", "Ошибка",
+                    MessageBox.Show("Поле 'Имя' не может быть пустым!", "Ошибка",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(phone))
+                {
+                    MessageBox.Show("Поле 'Телефон' не может быть пустым!", "Ошибка",
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
@@ -363,6 +378,7 @@ namespace ContactManager
                 {
                     string name = parts[0].Trim();
                     string phoneNumber = parts[1].Split('[')[0].Trim();
+
                     var contactToRemove = _contactManager.Contacts.FirstOrDefault(c =>
                         c.Name == name && c.PhoneNumber == phoneNumber);
 
@@ -382,7 +398,7 @@ namespace ContactManager
             }
         }
 
-        // ===== ПОИСК КОНТАКТОВ =====
+        // ===== ПОИСК =====
         private void SearchButton_Click(object sender, EventArgs e)
         {
             try

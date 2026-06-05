@@ -20,7 +20,6 @@ namespace ContactManager
             LoadGroups();
             LoadContacts();
 
-            // Если нет групп, создаём группу "Без группы" (Id = 0)
             if (!Groups.Any(g => g.Id == 0))
             {
                 Groups.Add(new ContactGroup(0, "Без группы"));
@@ -28,12 +27,17 @@ namespace ContactManager
             }
         }
 
-        // ========== НОВЫЕ МЕТОДЫ ДЛЯ ГРУПП ==========
+        // ===== МЕТОДЫ ДЛЯ ГРУПП =====
 
         public void AddGroup(string groupName)
         {
+            // ПРОВЕРКА НА ПУСТОЕ ИМЯ (ТЕСТ-КЕЙС 2)
             if (string.IsNullOrWhiteSpace(groupName))
                 throw new ArgumentException("Название группы не может быть пустым!");
+
+            // ПРОВЕРКА НА ДУБЛИКАТ (ТЕСТ-КЕЙС 3)
+            if (Groups.Any(g => g.Name.Equals(groupName, StringComparison.OrdinalIgnoreCase)))
+                throw new ArgumentException("Группа с таким именем уже существует!");
 
             int newId = Groups.Count > 0 ? Groups.Max(g => g.Id) + 1 : 1;
             Groups.Add(new ContactGroup(newId, groupName));
@@ -42,13 +46,12 @@ namespace ContactManager
 
         public void RemoveGroup(int groupId)
         {
-            if (groupId == 0) return; // Нельзя удалить группу "Без группы"
+            if (groupId == 0) return;
 
             var group = Groups.FirstOrDefault(g => g.Id == groupId);
             if (group != null)
             {
                 Groups.Remove(group);
-                // Контакты из удалённой группы → в группу "Без группы"
                 foreach (var contact in Contacts.Where(c => c.GroupId == groupId))
                 {
                     contact.GroupId = 0;
@@ -80,7 +83,7 @@ namespace ContactManager
             return Contacts.Where(c => c.GroupId == groupId).ToList();
         }
 
-        // ========== СУЩЕСТВУЮЩИЕ МЕТОДЫ (С ИЗМЕНЕНИЯМИ) ==========
+        // ===== МЕТОДЫ ДЛЯ КОНТАКТОВ =====
 
         public void AddContact(Contact contact)
         {
@@ -93,7 +96,6 @@ namespace ContactManager
             if (string.IsNullOrWhiteSpace(contact.PhoneNumber))
                 throw new ArgumentException("Телефон не может быть пустым!");
 
-            // Если группы с таким Id нет → ставим 0
             if (!Groups.Any(g => g.Id == contact.GroupId))
                 contact.GroupId = 0;
 
@@ -126,7 +128,7 @@ namespace ContactManager
                 c.PhoneNumber.Contains(query)).ToList();
         }
 
-        // ========== СОХРАНЕНИЕ И ЗАГРУЗКА ==========
+        // ===== СОХРАНЕНИЕ И ЗАГРУЗКА =====
 
         private void SaveContacts()
         {
